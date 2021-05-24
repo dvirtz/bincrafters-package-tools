@@ -1,0 +1,66 @@
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  PYTHON_VERSION: "3.8.6"
+
+cache:
+  paths:
+    - .cache/pip
+    - venv/
+
+stages:
+  - test
+  - deploy
+
+.linux-before-script:
+  before_script:
+    - python -V  # Print out python version for debugging
+    - python -m venv venv
+    - source venv/bin/activate
+
+.windows-before-script:
+  before_script:
+    - Import-Module "$env:ChocolateyInstall\helpers\chocolateyProfile.psm1"
+    - choco install python -y --version=$PYTHON_VERSION
+    - RefreshEnv
+    - python -V  # Print out python version for debugging
+    - python -m venv venv
+    - venv/Scripts/activate.ps1
+
+.test:
+  stage: test
+  only:
+    - pushes
+  image:
+    python:$PYTHON_VERSION
+  script:
+    - pip install -e .[test]
+    - python setup.py sdist
+    - cd tests
+    - pytest -v -s --cov=bincrafters
+    - mv .coverage ..
+    - cd ..
+    - codecov
+
+Test Tools on Linux:
+  extends: 
+    - .linux-before-script
+    - .test
+  tags:
+    - linux
+
+Test Tools on Windows:
+  extends: 
+    - .windows-before-script
+    - .test
+  tags:
+    - windows
+
+Deploy Package Tools to PyPi:
+  stage: deploy
+  script:
+    - pip install twine
+    - python setup.py sdist
+    - TWINE_PASSWORD=${CI_JOB_TOKEN} TWINE_USERNAME=gitlab-ci-token \
+        python -m twine upload \
+        --repository-url ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/pypi dist/*

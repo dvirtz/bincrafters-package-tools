@@ -38,6 +38,7 @@ tmp/
 
 # IDE
 .idea/*
+.vscode/
 
 
 .cache/
