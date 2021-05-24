@@ -1,9 +1,11 @@
 import os
+from bincrafters.build_shared import PLATFORMS
 
 MINIMUM_CONFIG_FILE_VERSIONS = {
     "generate-ci-jobs": {
         "gha": 11,
-        "azp": 2
+        "azp": 2,
+        "gl": 12
     }
 }
 
@@ -13,7 +15,7 @@ def get_config_file_version() -> int:
 
 
 def get_minimum_compatible_version(platform: str, feature: str) -> int:
-    if platform not in ["gha", "azp"]:
+    if platform not in PLATFORMS:
         raise ValueError("Unknown platform value {}".format(platform))
 
     if feature not in ["generate-ci-jobs", ]:

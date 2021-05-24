@@ -2,10 +2,12 @@ import json
 import os
 import subprocess
 
+from bincrafters.build_shared import PLATFORMS
+
 
 def prepare_env(platform: str, config: json, select_config: str = None):
-    if platform != "gha" and platform != "azp":
-        raise ValueError("Only GitHub Actions and Azure Pipelines is supported at this point.")
+    if platform not in PLATFORMS:
+        raise ValueError("Only GitHub Actions, Azure Pipelines and GitLab are supported at this point.")
 
     if platform != "azp" and select_config is not None:
         raise ValueError("The --select-config parameter can only be used with Azure Pipelines.")

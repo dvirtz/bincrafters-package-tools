@@ -2,8 +2,9 @@ import json
 import os
 import yaml
 import copy
+import logging
 
-from bincrafters.build_shared import get_bool_from_env, get_conan_vars, get_recipe_path, get_version_from_ci
+from bincrafters.build_shared import PLATFORMS, get_bool_from_env, get_conan_vars, get_recipe_path, get_version_from_ci
 from bincrafters.autodetect import *
 from bincrafters.utils import *
 from bincrafters.check_compatibility import *
@@ -56,7 +57,7 @@ def _get_base_config(recipe_directory: str, platform: str, split_by_build_types:
     matrix = {}
     matrix_minimal = {}
 
-    if platform == "gha":
+    if platform == "gha" or platform == "gl":
         run_macos = _run_macos_jobs_on_gha()
         run_windows = _run_windows_jobs_on_gha()
         if recipe_type == "installer":
@@ -166,7 +167,7 @@ def _get_base_config(recipe_directory: str, platform: str, split_by_build_types:
 
 
 def generate_ci_jobs(platform: str, recipe_type: str = autodetect(), split_by_build_types: bool = False) -> str:
-    if platform != "gha" and platform != "azp":
+    if platform not in PLATFORMS:
         return ""
 
     if not is_ci_config_compatible(platform=platform, feature="generate-ci-jobs"):
@@ -271,5 +272,36 @@ def generate_ci_jobs(platform: str, recipe_type: str = autodetect(), split_by_bu
         for build_config in final_matrix["config"]:
             platform_matrix[build_config["name"]] = build_config
         matrix_string = json.dumps(platform_matrix)
+    elif platform == "gl":
+        gl_matrix = {}
+        for config in final_matrix["config"]:
+            gl_config = config.copy()
+            del gl_config["name"]
+            del gl_config["os"]
+            name = config["name"]
+            if config["os"] == "ubuntu-18.04":
+                gl_matrix[name] = {
+                    "tags": [
+                        "linux"
+                    ],
+                    "image": config.get("dockerImage", "ubuntu/18.04")
+                }
+            elif config["os"] == "windows-2019" or config["os"] == "windows-latest":
+                gl_matrix[name] = {
+                    "tags": [
+                        "windows-1809"
+                    ]
+                }
+            else:
+                logging.warn("unsupported OS {}".format(config["os"]))
+                continue
+
+            gl_matrix[name]["extends"] = [
+                ".child-config"
+            ]
+            gl_matrix[name]["variables"] = {
+                "BPT_MATRIX": json.dumps(gl_config)
+            }
+        matrix_string = json.dumps(gl_matrix)
 
     return matrix_string

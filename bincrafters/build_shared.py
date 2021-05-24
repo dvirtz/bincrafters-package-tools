@@ -10,6 +10,7 @@ from cpt.printer import Printer
 from bincrafters.build_paths import BINCRAFTERS_REPO_URL, BINCRAFTERS_LOGIN_USERNAME, BINCRAFTERS_USERNAME, BINCRAFTERS_REPO_NAME
 
 printer = Printer()
+PLATFORMS = ["gha", "azp", "gl"]
 # ci_manager = CIManager(printer=printer)
 
 

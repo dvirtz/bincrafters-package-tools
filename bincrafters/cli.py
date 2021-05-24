@@ -6,6 +6,7 @@ from bincrafters.build_autodetect import run_autodetect
 from bincrafters.autodetect import autodetect
 from bincrafters.generate_ci_jobs import generate_ci_jobs
 from bincrafters.prepare_env import prepare_env
+from bincrafters.build_shared import PLATFORMS
 
 
 def _parse_arguments(*args):
@@ -14,12 +15,12 @@ def _parse_arguments(*args):
                         help="Executes builds according to current env variables and recipe type auto detection")
     subparsers = parser.add_subparsers(dest="commands")
     genmatrix = subparsers.add_parser("generate-ci-jobs", help="Provides a CI job matrix as a JSON-fied string")
-    genmatrix.add_argument('--platform', type=str, choices=["gha", "azp"],
+    genmatrix.add_argument('--platform', type=str, choices=PLATFORMS,
                         help="Specfies the CI platform")
     genmatrix.add_argument('--split-by-build-types', type=str, choices=["true", "false"],
                         help="Split build jobs by build types")
     prepareenv = subparsers.add_parser("prepare-env", help="Prepares the environment by setting env vars and similar")
-    prepareenv.add_argument('--platform', type=str, required=True, choices=["gha", "azp"],
+    prepareenv.add_argument('--platform', type=str, required=True, choices=PLATFORMS,
                         help="Specfies the CI platform")
     prepareenv.add_argument('--config', type=str, required=True,
                         help="JSON config string in the bincrafters-package-tools format")
