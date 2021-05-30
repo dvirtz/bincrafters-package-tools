@@ -36,7 +36,7 @@ def load_version():
         conan_init = version_file.read()
         version = re.search("__version__ = '([0-9a-z.-]+)'", conan_init).group(1)
         if os.environ.get("GITLAB_CI", False) and os.environ["CI_COMMIT_BRANCH"] != os.environ["CI_DEFAULT_BRANCH"]:
-            version = "{}.{}".format(version, os.environ["CI_COMMIT_SHORT_SHA"])
+            version = "{}+{}".format(version, os.environ["CI_COMMIT_SHORT_SHA"])
         return version
 
 setup(
