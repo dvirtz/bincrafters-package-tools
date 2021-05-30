@@ -58,6 +58,10 @@ Test Tools on Windows:
 
 Deploy Package Tools to PyPi:
   stage: deploy
+  only:
+    - pushes
+  image:
+    python:$PYTHON_VERSION
   script:
     - pip install twine
     - python setup.py sdist
