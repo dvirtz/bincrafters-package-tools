@@ -24,10 +24,13 @@ def utils_git_get_current_branch() -> str:
     repobranch_gha = _clean_branch(os.getenv("GITHUB_REF", ""))
     if os.getenv("GITHUB_EVENT_NAME", "") == "pull_request":
         repobranch_gha = _clean_branch(os.getenv("GITHUB_HEAD_REF", ""))
+    repobranch_gl = _clean_branch(os.getenv("CI_COMMIT_REF_NAME", ""))
+    if os.getenv("CI_PIPELINE_SOURCE", "") == "merge_request_event":
+        repobranch_gl = _clean_branch(os.getenv("CI_MERGE_REQUEST_SOURCE_BRANCH_NAME", ""))
 
     repobranch_git = _utils_execute_script("git branch --show-current")
 
-    return repobranch_azp or repobranch_gha or repobranch_git
+    return repobranch_azp or repobranch_gha or repobranch_gl or repobranch_git
 
 
 def utils_git_get_current_commit() -> str:
