@@ -82,7 +82,8 @@ def get_repo_name_from_ci():
     reponame_a = os.getenv("APPVEYOR_REPO_NAME", "")
     reponame_azp = os.getenv("BUILD_REPOSITORY_NAME", "")
     reponame_g = os.getenv("GITHUB_REPOSITORY", "")
-    return reponame_a or reponame_azp or reponame_g
+    reponame_gl = os.getenv("CI_PROJECT_NAME", "")
+    return reponame_a or reponame_azp or reponame_g or reponame_gl
 
 
 def get_repo_branch_from_ci():
@@ -100,8 +101,11 @@ def get_repo_branch_from_ci():
     repobranch_g = _clean_branch(os.getenv("GITHUB_REF", ""))
     if os.getenv("GITHUB_EVENT_NAME", "") == "pull_request":
         repobranch_g = os.getenv("GITHUB_BASE_REF", "")
+    repobranch_gl = _clean_branch(os.getenv("CI_COMMIT_REF_NAME", ""))
+    if os.getenv("CI_PIPELINE_SOURCE", "") == "merge_request_event":
+        repobranch_gl = os.getenv("CI_MERGE_REQUEST_TARGET_BRANCH_NAME", "")
 
-    return repobranch_a or repobranch_azp or repobranch_g
+    return repobranch_a or repobranch_azp or repobranch_g or repobranch_gl
 
 
 def get_ci_vars():
