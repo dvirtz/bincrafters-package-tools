@@ -27,7 +27,7 @@ def prepare_env(platform: str, config: json, select_config: str = None):
                     shell=True
                 )
 
-        if platform == "azp":
+        elif platform == "azp":
             if compiler in ["VISUAL", "MSVC"]:
                 subprocess.run(
                     'echo ##vso[task.setvariable variable={}]{}'.format(var_name, value),
@@ -36,6 +36,15 @@ def prepare_env(platform: str, config: json, select_config: str = None):
             else:
                 subprocess.run(
                     'echo "##vso[task.setvariable variable={}]{}"'.format(var_name, value),
+                    shell=True
+                )
+
+        elif platform == "gl":
+            if compiler == "VISUAL":
+                os.system('echo {}={}>> {}.env'.format(var_name, value, os.getenv("CI_JOB_NAME")))
+            else:
+                subprocess.run(
+                    'echo "{}={}" >> {}.env'.format(var_name, value, os.getenv("CI_JOB_NAME")),
                     shell=True
                 )
 
