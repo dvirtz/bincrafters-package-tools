@@ -283,12 +283,12 @@ def generate_ci_jobs(platform: str, recipe_type: str = autodetect(), split_by_bu
                 gl_matrix[name] = {
                     "image": config.get("dockerImage", "ubuntu/18.04")
                 }
-            elif config["os"] == "windows-2019" or config["os"] == "windows-latest":
-                gl_matrix[name] = {
-                    "tags": [
-                        "windows-1809"
-                    ]
-                }
+            # elif config["os"] == "windows-2019" or config["os"] == "windows-latest":
+            #     gl_matrix[name] = {
+            #         "tags": [
+            #             "windows-1809"
+            #         ]
+            #     }
             else:
                 logging.warn("unsupported OS {}".format(config["os"]))
                 continue
