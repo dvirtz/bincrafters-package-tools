@@ -1,14 +1,17 @@
 import subprocess
 import os
+import logging
 
 
 def _utils_execute_script(script: str, remove_newlines: bool = True) -> str:
+    logging.debug('executing {}'.format(script))
     output = subprocess.run(script,
                             capture_output=True,
                             shell=True)
     result = output.stdout.decode("utf-8")
     if remove_newlines:
         result = output.stdout.decode("utf-8").replace("\n", "")
+    logging.debug('result is {}'.format(result))
     return result
 
 
