@@ -281,7 +281,7 @@ def generate_ci_jobs(platform: str, recipe_type: str = autodetect(), split_by_bu
             name = config["name"]
             if config["os"] == "ubuntu-18.04":
                 gl_matrix[name] = {
-                    "image": config.get("dockerImage", "ubuntu/18.04")
+                    "image": config.get("dockerImage", "ubuntu:18.04")
                 }
             # elif config["os"] == "windows-2019" or config["os"] == "windows-latest":
             #     gl_matrix[name] = {
