@@ -22,6 +22,8 @@ def _parse_arguments(*args):
                         help="Specfies the CI platform")
     genmatrix.add_argument('--split-by-build-types', type=str, choices=["true", "false"],
                         help="Split build jobs by build types")
+    genmatrix.add_argument('--gitlab-windows-tag', type=str, help='tag for windows runners')
+    genmatrix.add_argument('--gitlab-macos-tag', type=str, help='tag for MacOS runners')
     prepareenv = subparsers.add_parser("prepare-env", help="Prepares the environment by setting env vars and similar")
     prepareenv.add_argument('--platform', type=str, required=True, choices=PLATFORMS,
                         help="Specfies the CI platform")
@@ -30,6 +32,8 @@ def _parse_arguments(*args):
     prepareenv.add_argument('--select-config', type=str, required=False,
                         help="AZP only; name which config pair gets applied")
     args = parser.parse_args(*args)
+    if args.platform != 'gl' and ('gitlab_windows_tag' in vars(args) or 'gitlab_macos_tag' in vars(args)):
+        parser.error('--gitlab-windows-tag and --gitlab-macos-tag require --platform=gitlab')
     return args
 
 
@@ -46,7 +50,8 @@ def run(*args):
         split_by_build_types = arguments.split_by_build_types
 
         # Note: it is important that we only print the matrix and absolutely nothing else
-        print(generate_ci_jobs(platform=arguments.platform, split_by_build_types=split_by_build_types))
+        print(generate_ci_jobs(platform=arguments.platform, split_by_build_types=split_by_build_types, 
+                               gitlab_windows_tag=arguments.gitlab_windows_tag, gitlab_macos_tag=arguments.gitlab_macos_tag))
 
 
 def cli():

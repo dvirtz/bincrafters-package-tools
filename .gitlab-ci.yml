@@ -1,7 +1,7 @@
 
 variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
-  PYTHON_VERSION: "3.8.6"
+  PYTHON_VERSION: "3.8"
 
 cache:
   paths:

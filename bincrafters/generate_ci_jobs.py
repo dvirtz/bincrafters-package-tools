@@ -42,7 +42,13 @@ def _do_discard_duplicated_build_ids() -> bool:
     return get_bool_from_env("BPT_MATRIX_DISCARD_DUPLICATE_BUILD_IDS", default="true")
 
 
-def _get_base_config(recipe_directory: str, platform: str, split_by_build_types: bool, build_set: str = "full", recipe_type: str = ""):
+def _get_base_config(recipe_directory: str, 
+                     platform: str, 
+                     split_by_build_types: bool, 
+                     build_set: str = "full", 
+                     recipe_type: str = "", 
+                     gitlab_windows_tag: str = None,
+                     gitlab_macos_tag: str = None):
     if recipe_type == "":
         if _do_discard_duplicated_build_ids():
             cwd = os.getcwd()
@@ -58,8 +64,8 @@ def _get_base_config(recipe_directory: str, platform: str, split_by_build_types:
     matrix_minimal = {}
 
     if platform == "gha" or platform == "gl":
-        run_macos = _run_macos_jobs_on_gha()
-        run_windows = _run_windows_jobs_on_gha()
+        run_macos = gitlab_macos_tag or _run_macos_jobs_on_gha()
+        run_windows = gitlab_windows_tag or _run_windows_jobs_on_gha()
         if recipe_type == "installer":
             matrix["config"] = [
                 {"name": "Installer Linux", "compiler": "GCC", "version": "7", "os": "ubuntu-18.04", "dockerImage": "conanio/gcc7"},
@@ -166,7 +172,11 @@ def _get_base_config(recipe_directory: str, platform: str, split_by_build_types:
         return {"config": []}
 
 
-def generate_ci_jobs(platform: str, recipe_type: str = autodetect(), split_by_build_types: bool = False) -> str:
+def generate_ci_jobs(platform: str, 
+                     recipe_type: str = autodetect(), 
+                     split_by_build_types: bool = False, 
+                     gitlab_windows_tag: str = None,
+                     gitlab_macos_tag: str = None) -> str:
     if platform not in PLATFORMS:
         return ""
 
@@ -224,7 +234,9 @@ def generate_ci_jobs(platform: str, recipe_type: str = autodetect(), split_by_bu
                             recipe_directory=os.path.join(path, version_attr["folder"]),
                             platform=platform,
                             split_by_build_types=split_by_build_types,
-                            build_set=version_build_value
+                            build_set=version_build_value,
+                            gitlab_windows_tag=gitlab_windows_tag,
+                            gitlab_macos_tag=gitlab_macos_tag
                         )
                     else:
                         raise ValueError("Unknown build value for version {} detected!".format(version))
@@ -241,7 +253,8 @@ def generate_ci_jobs(platform: str, recipe_type: str = autodetect(), split_by_bu
                         final_matrix["config"].append(new_config)
 
     if directory_structure == DIR_STRUCTURE_ONE_RECIPE_ONE_VERSION:
-        matrix = _get_base_config(recipe_directory=".", platform=platform, split_by_build_types=split_by_build_types)
+        matrix = _get_base_config(recipe_directory=".", platform=platform, split_by_build_types=split_by_build_types, 
+                                  gitlab_windows_tag=gitlab_windows_tag, gitlab_macos_tag=gitlab_macos_tag)
         for build_config in matrix["config"]:
             new_config = build_config.copy()
             new_config["cwd"] = "./"
@@ -281,14 +294,20 @@ def generate_ci_jobs(platform: str, recipe_type: str = autodetect(), split_by_bu
             name = config["name"]
             if config["os"] == "ubuntu-18.04":
                 gl_matrix[name] = {
-                    "image": config.get("dockerImage", "ubuntu:18.04")
+                    "image": config.get("dockerImage", "python:3.8")
                 }
-            # elif config["os"] == "windows-2019" or config["os"] == "windows-latest":
-            #     gl_matrix[name] = {
-            #         "tags": [
-            #             "windows-1809"
-            #         ]
-            #     }
+            elif gitlab_windows_tag and config["os"] == "windows-2019" or config["os"] == "windows-latest":
+                gl_matrix[name] = {
+                    "tags": [
+                        gitlab_windows_tag
+                    ]
+                }
+            elif gitlab_macos_tag and config["os"] == "macOS-10.15":
+                gl_matrix[name] = {
+                    "tags": [
+                        gitlab_macos_tag
+                    ]
+                }
             else:
                 logging.warn("unsupported OS {}".format(config["os"]))
                 continue
