@@ -32,7 +32,7 @@ def _parse_arguments(*args):
     prepareenv.add_argument('--select-config', type=str, required=False,
                         help="AZP only; name which config pair gets applied")
     args = parser.parse_args(*args)
-    if args.platform != 'gl' and ('gitlab_windows_tag' in vars(args) or 'gitlab_macos_tag' in vars(args)):
+    if 'platform' in vars(args) and args.platform != 'gl' and ('gitlab_windows_tag' in vars(args) or 'gitlab_macos_tag' in vars(args)):
         parser.error('--gitlab-windows-tag and --gitlab-macos-tag require --platform=gitlab')
     return args
 
