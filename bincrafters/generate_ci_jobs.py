@@ -3,6 +3,7 @@ import os
 import yaml
 import copy
 import logging
+import re
 
 from bincrafters.build_shared import PLATFORMS, get_bool_from_env, get_conan_vars, get_recipe_path, get_version_from_ci
 from bincrafters.autodetect import *
@@ -291,7 +292,7 @@ def generate_ci_jobs(platform: str,
             gl_config = config.copy()
             del gl_config["name"]
             del gl_config["os"]
-            name = config["name"]
+            name = re.sub('\W|^(?=\d)','_', config["name"])
             if config["os"] == "ubuntu-18.04":
                 gl_matrix[name] = {
                     "image": config.get("dockerImage", "python:3.8")
