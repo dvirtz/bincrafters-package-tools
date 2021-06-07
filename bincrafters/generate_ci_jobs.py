@@ -294,9 +294,10 @@ def generate_ci_jobs(platform: str,
             del gl_config["os"]
             name = re.sub('\W|^(?=\d)','_', config["name"])
             if config["os"] == "ubuntu-18.04":
-                gl_matrix[name] = {
-                    "image": config.get("dockerImage", "python:3.8")
-                }
+                gl_matrix[name] = {}
+                dockerImage = config.get("dockerImage")
+                if dockerImage: 
+                    gl_matrix[name]["image"] = dockerImage
             elif gitlab_windows_tag and config["os"] == "windows-2019" or config["os"] == "windows-latest":
                 gl_matrix[name] = {
                     "tags": [
