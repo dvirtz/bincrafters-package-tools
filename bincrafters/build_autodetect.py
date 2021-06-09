@@ -88,7 +88,7 @@ def run_autodetect():
 
     tmpdir = os.path.join(tempfile.gettempdir(), "conan")
 
-    os.makedirs(tmpdir, mode=0o777)
+    os.makedirs(tmpdir, mode=0o777, exist_ok=True)
     # In some cases Python may ignore the mode of makedirs, do it again explicitly with chmod
     os.chmod(tmpdir, mode=0o777)
 
