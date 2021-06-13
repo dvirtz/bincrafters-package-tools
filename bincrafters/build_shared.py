@@ -109,6 +109,9 @@ def get_repo_branch_from_ci():
 
 
 def get_ci_vars():
+    if not get_bool_from_env("CONAN_VERSIONED_BRANCH"):
+        return "", "", ""
+    
     reponame = get_repo_name_from_ci()
     reponame_split = reponame.split("/")
 
