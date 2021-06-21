@@ -4,6 +4,7 @@ import yaml
 import copy
 import logging
 import re
+import typing
 
 from bincrafters.build_shared import PLATFORMS, get_bool_from_env, get_conan_vars, get_recipe_path, get_version_from_ci
 from bincrafters.autodetect import *
@@ -48,8 +49,7 @@ def _get_base_config(recipe_directory: str,
                      split_by_build_types: bool, 
                      build_set: str = "full", 
                      recipe_type: str = "", 
-                     gitlab_windows_tag: str = None,
-                     gitlab_macos_tag: str = None):
+                     base_matrix: typing.TextIO = None):
     if recipe_type == "":
         if _do_discard_duplicated_build_ids():
             cwd = os.getcwd()
@@ -64,9 +64,19 @@ def _get_base_config(recipe_directory: str,
     matrix = {}
     matrix_minimal = {}
 
-    if platform == "gha" or platform == "gl":
-        run_macos = gitlab_macos_tag or _run_macos_jobs_on_gha()
-        run_windows = gitlab_windows_tag or _run_windows_jobs_on_gha()
+    if base_matrix:
+        try:
+            matrix["config"] = yaml.safe_load(base_matrix)
+        except:
+            matrix["config"] = json.load(base_matrix)
+        if recipe_type in matrix["config"]:
+            matrix["config"] = matrix["config"][recipe_type]
+        elif "default" in matrix["config"]:
+            matrix["config"] = matrix["config"]["default"]
+        matrix_minimal["config"] = matrix["config"].copy()
+    elif platform == "gha":
+        run_macos = _run_macos_jobs_on_gha()
+        run_windows = _run_windows_jobs_on_gha()
         if recipe_type == "installer":
             matrix["config"] = [
                 {"name": "Installer Linux", "compiler": "GCC", "version": "7", "os": "ubuntu-18.04", "dockerImage": "conanio/gcc7"},
@@ -141,6 +151,45 @@ def _get_base_config(recipe_directory: str,
                 {"name": "macOS Apple-Clang 11", "compiler": "APPLE_CLANG", "version": "11.0", "os": "macOS-10.15"},
                 {"name": "Windows VS 2019", "compiler": "VISUAL", "version": "16", "os": "windows-2019"},
             ]
+    elif platform == "gl":
+        windows_tags = [ "shared-windows", "windows", "windows-1809" ]
+        if recipe_type == "installer":
+            matrix["config"] = [
+                {"name": "Installer Linux",  "compiler": "GCC", "version": "7", "image": "conanio/gcc7"},
+                {"name": "Installer Windows", "compiler": "VISUAL", "version": "16", "tags": windows_tags}
+            ]
+            matrix_minimal["config"] = matrix["config"].copy()
+        elif recipe_type == "unconditional_header_only":
+            matrix["config"] = [
+                {"name": "Header-only Linux", "compiler": "CLANG", "version": "8"},
+                {"name": "Header-only Windows", "compiler": "VISUAL", "version": "16", "tags": windows_tags}
+            ]
+            matrix_minimal["config"] = matrix["config"].copy()
+        else:
+            matrix["config"] = [
+                {"name": "GCC 4.9", "compiler": "GCC", "version": "4.9"},
+                {"name": "GCC 5", "compiler": "GCC", "version": "5"},
+                {"name": "GCC 6", "compiler": "GCC", "version": "6"},
+                {"name": "GCC 7", "compiler": "GCC", "version": "7"},
+                {"name": "GCC 8", "compiler": "GCC", "version": "8"},
+                {"name": "GCC 9", "compiler": "GCC", "version": "9"},
+                {"name": "GCC 10", "compiler": "GCC", "version": "10"},
+                {"name": "CLANG 3.9", "compiler": "CLANG", "version": "3.9"},
+                {"name": "CLANG 4.0", "compiler": "CLANG", "version": "4.0"},
+                {"name": "CLANG 5.0", "compiler": "CLANG", "version": "5.0"},
+                {"name": "CLANG 6.0", "compiler": "CLANG", "version": "6.0"},
+                {"name": "CLANG 7.0", "compiler": "CLANG", "version": "7.0"},
+                {"name": "CLANG 8", "compiler": "CLANG", "version": "8"},
+                {"name": "CLANG 9", "compiler": "CLANG", "version": "9"},
+                {"name": "CLANG 10", "compiler": "CLANG", "version": "10"},
+                {"name": "CLANG 11", "compiler": "CLANG", "version": "11"},
+                {"name": "Windows VS 2019", "compiler": "VISUAL", "version": "16", "tags": windows_tags},
+            ]
+            matrix_minimal["config"] = [
+                {"name": "GCC 7", "compiler": "GCC", "version": "7"},
+                {"name": "CLANG 8", "compiler": "CLANG", "version": "8"},
+                {"name": "Windows VS 2019", "compiler": "VISUAL", "version": "16", "tags": windows_tags},
+            ]
 
     # Split build jobs by build_type (Debug, Release)
     # Duplicate each builds job, then add the buildType value
@@ -176,8 +225,7 @@ def _get_base_config(recipe_directory: str,
 def generate_ci_jobs(platform: str, 
                      recipe_type: str = autodetect(), 
                      split_by_build_types: bool = False, 
-                     gitlab_windows_tag: str = None,
-                     gitlab_macos_tag: str = None) -> str:
+                     base_matrix: typing.TextIO = None) -> str:
     if platform not in PLATFORMS:
         return ""
 
@@ -236,8 +284,7 @@ def generate_ci_jobs(platform: str,
                             platform=platform,
                             split_by_build_types=split_by_build_types,
                             build_set=version_build_value,
-                            gitlab_windows_tag=gitlab_windows_tag,
-                            gitlab_macos_tag=gitlab_macos_tag
+                            base_matrix=base_matrix
                         )
                     else:
                         raise ValueError("Unknown build value for version {} detected!".format(version))
@@ -255,7 +302,7 @@ def generate_ci_jobs(platform: str,
 
     if directory_structure == DIR_STRUCTURE_ONE_RECIPE_ONE_VERSION:
         matrix = _get_base_config(recipe_directory=".", platform=platform, split_by_build_types=split_by_build_types, 
-                                  gitlab_windows_tag=gitlab_windows_tag, gitlab_macos_tag=gitlab_macos_tag)
+                                  base_matrix=base_matrix)
         for build_config in matrix["config"]:
             new_config = build_config.copy()
             new_config["cwd"] = "./"
@@ -291,34 +338,12 @@ def generate_ci_jobs(platform: str,
         for config in final_matrix["config"]:
             gl_config = config.copy()
             del gl_config["name"]
-            del gl_config["os"]
             name = re.sub('\W|^(?=\d)','_', config["name"])
-            if config["os"] == "ubuntu-18.04":
-                gl_matrix[name] = {}
-                dockerImage = config.get("dockerImage")
-                if dockerImage: 
-                    gl_matrix[name]["image"] = dockerImage
-            elif gitlab_windows_tag and config["os"] == "windows-2019" or config["os"] == "windows-latest":
-                gl_matrix[name] = {
-                    "tags": [
-                        gitlab_windows_tag
-                    ]
+            gl_matrix[name] = {
+                "extends": [ ".child-config" ],
+                "variables": {
+                    "BPT_MATRIX": json.dumps(gl_config)
                 }
-            elif gitlab_macos_tag and config["os"] == "macOS-10.15":
-                gl_matrix[name] = {
-                    "tags": [
-                        gitlab_macos_tag
-                    ]
-                }
-            else:
-                logging.warn("unsupported OS {}".format(config["os"]))
-                continue
-
-            gl_matrix[name]["extends"] = [
-                ".child-config"
-            ]
-            gl_matrix[name]["variables"] = {
-                "BPT_MATRIX": json.dumps(gl_config)
             }
         matrix_string = json.dumps(gl_matrix)
 
