@@ -341,10 +341,13 @@ def generate_ci_jobs(platform: str,
             name = re.sub('\W|^(?=\d)','_', config["name"])
             gl_matrix[name] = {
                 "extends": [ ".child-config" ],
-                "variables": {
-                    "BPT_MATRIX": json.dumps(gl_config)
-                }
             }
-        matrix_string = json.dumps(gl_matrix)
+            if "tags" in gl_config:
+                gl_matrix[name]["tags"] = gl_config["tags"]
+                del gl_config["tags"]
+            gl_matrix[name]["variables"] = {
+                "BPT_MATRIX": json.dumps(gl_config)
+            }
+        matrix_string = yaml.dump(gl_matrix)
 
     return matrix_string
