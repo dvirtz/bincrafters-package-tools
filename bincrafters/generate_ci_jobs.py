@@ -152,43 +152,42 @@ def _get_base_config(recipe_directory: str,
                 {"name": "Windows VS 2019", "compiler": "VISUAL", "version": "16", "os": "windows-2019"},
             ]
     elif platform == "gl":
-        windows_tags = [ "shared-windows", "windows", "windows-1809" ]
         if recipe_type == "installer":
             matrix["config"] = [
-                {"name": "Installer Linux",  "compiler": "GCC", "version": "7", "image": "conanio/gcc7"},
-                {"name": "Installer Windows", "compiler": "VISUAL", "version": "16", "tags": windows_tags}
+                {"name": "Installer Linux",  "compiler": "GCC", "version": "7", "image": "conanio/gcc7", "extends": [ ".child-config", ".child-config-linux" ]},
+                {"name": "Installer Windows", "compiler": "VISUAL", "version": "16", "extends": [ ".child-config", ".child-config-windows" ]}
             ]
             matrix_minimal["config"] = matrix["config"].copy()
         elif recipe_type == "unconditional_header_only":
             matrix["config"] = [
-                {"name": "Header-only Linux", "compiler": "CLANG", "version": "8"},
-                {"name": "Header-only Windows", "compiler": "VISUAL", "version": "16", "tags": windows_tags}
+                {"name": "Header-only Linux", "compiler": "CLANG", "version": "8", "extends": [ ".child-config", ".child-config-linux" ]},
+                {"name": "Header-only Windows", "compiler": "VISUAL", "version": "16", "extends": [ ".child-config", ".child-config-windows" ]}
             ]
             matrix_minimal["config"] = matrix["config"].copy()
         else:
             matrix["config"] = [
-                {"name": "GCC 4.9", "compiler": "GCC", "version": "4.9"},
-                {"name": "GCC 5", "compiler": "GCC", "version": "5"},
-                {"name": "GCC 6", "compiler": "GCC", "version": "6"},
-                {"name": "GCC 7", "compiler": "GCC", "version": "7"},
-                {"name": "GCC 8", "compiler": "GCC", "version": "8"},
-                {"name": "GCC 9", "compiler": "GCC", "version": "9"},
-                {"name": "GCC 10", "compiler": "GCC", "version": "10"},
-                {"name": "CLANG 3.9", "compiler": "CLANG", "version": "3.9"},
-                {"name": "CLANG 4.0", "compiler": "CLANG", "version": "4.0"},
-                {"name": "CLANG 5.0", "compiler": "CLANG", "version": "5.0"},
-                {"name": "CLANG 6.0", "compiler": "CLANG", "version": "6.0"},
-                {"name": "CLANG 7.0", "compiler": "CLANG", "version": "7.0"},
-                {"name": "CLANG 8", "compiler": "CLANG", "version": "8"},
-                {"name": "CLANG 9", "compiler": "CLANG", "version": "9"},
-                {"name": "CLANG 10", "compiler": "CLANG", "version": "10"},
-                {"name": "CLANG 11", "compiler": "CLANG", "version": "11"},
-                {"name": "Windows VS 2019", "compiler": "VISUAL", "version": "16", "tags": windows_tags},
+                {"name": "GCC 4.9", "compiler": "GCC", "version": "4.9", "extends": [ ".child-config", ".child-config-linux" ]},
+                {"name": "GCC 5", "compiler": "GCC", "version": "5", "extends": [ ".child-config", ".child-config-linux" ]},
+                {"name": "GCC 6", "compiler": "GCC", "version": "6", "extends": [ ".child-config", ".child-config-linux" ]},
+                {"name": "GCC 7", "compiler": "GCC", "version": "7", "extends": [ ".child-config", ".child-config-linux" ]},
+                {"name": "GCC 8", "compiler": "GCC", "version": "8", "extends": [ ".child-config", ".child-config-linux" ]},
+                {"name": "GCC 9", "compiler": "GCC", "version": "9", "extends": [ ".child-config", ".child-config-linux" ]},
+                {"name": "GCC 10", "compiler": "GCC", "version": "10", "extends": [ ".child-config", ".child-config-linux" ]},
+                {"name": "CLANG 3.9", "compiler": "CLANG", "version": "3.9", "extends": [ ".child-config", ".child-config-linux" ]},
+                {"name": "CLANG 4.0", "compiler": "CLANG", "version": "4.0", "extends": [ ".child-config", ".child-config-linux" ]},
+                {"name": "CLANG 5.0", "compiler": "CLANG", "version": "5.0", "extends": [ ".child-config", ".child-config-linux" ]},
+                {"name": "CLANG 6.0", "compiler": "CLANG", "version": "6.0", "extends": [ ".child-config", ".child-config-linux" ]},
+                {"name": "CLANG 7.0", "compiler": "CLANG", "version": "7.0", "extends": [ ".child-config", ".child-config-linux" ]},
+                {"name": "CLANG 8", "compiler": "CLANG", "version": "8", "extends": [ ".child-config", ".child-config-linux" ]},
+                {"name": "CLANG 9", "compiler": "CLANG", "version": "9", "extends": [ ".child-config", ".child-config-linux" ]},
+                {"name": "CLANG 10", "compiler": "CLANG", "version": "10", "extends": [ ".child-config", ".child-config-linux" ]},
+                {"name": "CLANG 11", "compiler": "CLANG", "version": "11", "extends": [ ".child-config", ".child-config-linux" ]},
+                {"name": "Windows VS 2019", "compiler": "VISUAL", "version": "16", "extends": [ ".child-config", ".child-config-windows" ]},
             ]
             matrix_minimal["config"] = [
-                {"name": "GCC 7", "compiler": "GCC", "version": "7"},
-                {"name": "CLANG 8", "compiler": "CLANG", "version": "8"},
-                {"name": "Windows VS 2019", "compiler": "VISUAL", "version": "16", "tags": windows_tags},
+                {"name": "GCC 7", "compiler": "GCC", "version": "7", "extends": [ ".child-config", ".child-config-linux" ]},
+                {"name": "CLANG 8", "compiler": "CLANG", "version": "8", "extends": [ ".child-config", ".child-config-linux" ]},
+                {"name": "Windows VS 2019", "compiler": "VISUAL", "version": "16", "extends": [ ".child-config", ".child-config-windows" ]},
             ]
 
     # Split build jobs by build_type (Debug, Release)
@@ -336,18 +335,16 @@ def generate_ci_jobs(platform: str,
     elif platform == "gl":
         gl_matrix = {}
         for config in final_matrix["config"]:
-            gl_config = config.copy()
-            del gl_config["name"]
             name = re.sub('\W|^(?=\d)','_', config["name"])
-            gl_matrix[name] = {
-                "extends": [ ".child-config" ],
-            }
-            if "tags" in gl_config:
-                gl_matrix[name]["tags"] = gl_config["tags"]
-                del gl_config["tags"]
-            gl_matrix[name]["variables"] = {
-                "BPT_MATRIX": json.dumps(gl_config)
-            }
+            del config["name"]
+            bpt_matrix = {}
+            for key in [ "compiler", "version", "cwd", "recipe_version" ]:
+                bpt_matrix[key] = config[key]
+                del config[key]
+            config["variables"] = {
+                "BPT_MATRIX": json.dumps(bpt_matrix)
+            }       
+            gl_matrix[name] = config
         matrix_string = yaml.dump(gl_matrix)
 
     return matrix_string
