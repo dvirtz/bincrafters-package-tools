@@ -1,11 +1,11 @@
 import json
 import os
 import subprocess
+import typing
 
 from bincrafters.build_shared import PLATFORMS
 
-
-def prepare_env(platform: str, config: json, select_config: str = None):
+def prepare_env(platform: str, config: json, select_config: str = None, set_env_variable: typing.Callable[[str, str], None] = None):
     if platform not in PLATFORMS:
         raise ValueError("Only GitHub Actions, Azure Pipelines and GitLab are supported at this point.")
 
@@ -39,28 +39,21 @@ def prepare_env(platform: str, config: json, select_config: str = None):
                     shell=True
                 )
 
-        elif platform == "gl":
-            if compiler == "VISUAL":
-                os.system('echo {}={}>> {}.env'.format(var_name, value, os.getenv("CI_JOB_NAME")))
-            else:
-                subprocess.run(
-                    'echo "{}={}" >> {}.env'.format(var_name, value, os.getenv("CI_JOB_NAME")),
-                    shell=True
-                )
+    set_env_variable = set_env_variable or _set_env_variable
 
     compiler = config["compiler"]
     compiler_version = config["version"]
     docker_image = config.get("dockerImage", "")
     build_type = config.get("buildType", "")
 
-    _set_env_variable("BPT_CWD", config["cwd"])
-    _set_env_variable("CONAN_VERSION", config["recipe_version"])
+    set_env_variable("BPT_CWD", config["cwd"])
+    set_env_variable("CONAN_VERSION", config["recipe_version"])
 
     if compiler == "APPLE_CLANG":
         if "." not in compiler_version:
             compiler_version = "{}.0".format(compiler_version)
 
-    _set_env_variable("CONAN_{}_VERSIONS".format(compiler), compiler_version)
+    set_env_variable("CONAN_{}_VERSIONS".format(compiler), compiler_version)
 
     if compiler == "GCC" or compiler == "CLANG":
         if docker_image == "":
@@ -72,10 +65,10 @@ def prepare_env(platform: str, config: json, select_config: str = None):
                 docker_image = "conanio/{}{}-ubuntu16.04".format(compiler_lower, version_without_dot)
             else:
                 docker_image = "conanio/{}{}".format(compiler_lower, version_without_dot)
-        _set_env_variable("CONAN_DOCKER_IMAGE", docker_image)
+        set_env_variable("CONAN_DOCKER_IMAGE", docker_image)
 
     if build_type != "":
-        _set_env_variable("CONAN_BUILD_TYPES", build_type)
+        set_env_variable("CONAN_BUILD_TYPES", build_type)
 
     if platform == "gha" or platform == "azp":
         if compiler == "APPLE_CLANG":
@@ -118,4 +111,5 @@ def prepare_env(platform: str, config: json, select_config: str = None):
         subprocess.run('sudo rm -rf "$AGENT_TOOLSDIRECTORY/go"', shell=True)
         subprocess.run('sudo rm -rf "$AGENT_TOOLSDIRECTORY/node"', shell=True)
 
-    subprocess.run("conan user", shell=True)
+    if platform != "gl":
+        subprocess.run("conan user", shell=True)

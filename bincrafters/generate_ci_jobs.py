@@ -10,6 +10,7 @@ from bincrafters.build_shared import PLATFORMS, get_bool_from_env, get_conan_var
 from bincrafters.autodetect import *
 from bincrafters.utils import *
 from bincrafters.check_compatibility import *
+from bincrafters.prepare_env import prepare_env
 import bincrafters
 
 
@@ -341,9 +342,10 @@ def generate_ci_jobs(platform: str,
             for key in [ "compiler", "version", "cwd", "recipe_version" ]:
                 bpt_matrix[key] = config[key]
                 del config[key]
-            config["variables"] = {
-                "BPT_MATRIX": json.dumps(bpt_matrix)
-            }       
+            config["variables"] = {}
+            def _set_env_variable(var_name: str, value: str):
+                config["variables"][var_name] = value
+            prepare_env(platform, bpt_matrix, set_env_variable=_set_env_variable)
             gl_matrix[name] = config
         matrix_string = yaml.dump(gl_matrix)
 
