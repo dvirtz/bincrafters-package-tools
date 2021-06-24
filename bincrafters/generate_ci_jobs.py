@@ -336,7 +336,7 @@ def generate_ci_jobs(platform: str,
     elif platform == "gl":
         gl_matrix = {}
         for config in final_matrix["config"]:
-            name = re.sub('\W|^(?=\d)','_', config["name"])
+            name = config["name"]
             del config["name"]
             bpt_matrix = {}
             for key in [ "compiler", "version", "cwd", "recipe_version" ]:
