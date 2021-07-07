@@ -225,6 +225,7 @@ def _get_base_config(recipe_directory: str,
 def generate_ci_jobs(platform: str, 
                      recipe_type: str = autodetect(), 
                      split_by_build_types: bool = False, 
+                     force_build_all: bool = False,
                      base_matrix: typing.TextIO = None) -> str:
     if platform not in PLATFORMS:
         return ""
@@ -266,7 +267,7 @@ def generate_ci_jobs(platform: str,
 
         return set(changed_dirs)
 
-    def _parse_recipe_directory(path: str, path_filter: str = None, recipe_displayname: str = None):
+    def _parse_recipe_directory(path: str, path_filter: str = None, recipe_displayname: str = None, force_build_all: bool = False):
         changed_dirs = _detect_changed_directories(path_filter=path_filter)
         config_file = os.path.join(path, "config.yml")
         config_yml = yaml.load(open(config_file, "r"))
@@ -276,7 +277,8 @@ def generate_ci_jobs(platform: str,
             # regardless of config.yml settings
             # If we are on an unversioned branch, only build versions which dirs got changed
             if (get_version_from_ci() == "" and version_attr["folder"] in changed_dirs) \
-                    or get_version_from_ci() == version:
+                    or get_version_from_ci() == version \
+                    or force_build_all:
                 if version_build_value != "none":
                     if version_build_value == "full" or version_build_value == "minimal":
                         working_matrix = _get_base_config(
@@ -311,7 +313,7 @@ def generate_ci_jobs(platform: str,
             final_matrix["config"].append(new_config)
 
     elif directory_structure == DIR_STRUCTURE_ONE_RECIPE_MANY_VERSIONS:
-        _parse_recipe_directory(path=os.getcwd())
+        _parse_recipe_directory(path=os.getcwd(), force_build_all=force_build_all)
 
     elif directory_structure == DIR_STRUCTURE_CCI:
         recipes = [f.path for f in os.scandir("recipes") if f.is_dir()]
@@ -320,7 +322,8 @@ def generate_ci_jobs(platform: str,
             recipe_displayname = recipe_folder.replace("recipes/", "")
             _parse_recipe_directory(path=recipe_folder,
                                     path_filter="{}/".format(recipe_folder),
-                                    recipe_displayname=recipe_displayname)
+                                    recipe_displayname=recipe_displayname,
+                                    force_build_all=force_build_all)
 
     # Now where we have the complete matrix, we have to parse it in a final string
     # which can be understood by the target platform
