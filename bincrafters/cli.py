@@ -2,6 +2,7 @@ import argparse
 import logging
 import sys
 import json
+import pathlib
 
 from bincrafters.build_autodetect import run_autodetect
 from bincrafters.autodetect import autodetect
@@ -24,7 +25,7 @@ def _parse_arguments(*args):
                         help="Split build jobs by build types")
     genmatrix.add_argument('--force-build-all', action='store_true',
                         help="Force building all recipes, even if unchanged")
-    genmatrix.add_argument('--base-matrix', type=argparse.FileType('r'), help='read base matrix from an input JSON or YAML file')
+    genmatrix.add_argument('--base-matrix', type=pathlib.Path, help='read base matrix from an input JSON or YAML file')
     prepareenv = subparsers.add_parser("prepare-env", help="Prepares the environment by setting env vars and similar")
     prepareenv.add_argument('--platform', type=str, required=True, choices=PLATFORMS,
                         help="Specfies the CI platform")
@@ -50,7 +51,7 @@ def run(*args):
 
         # Note: it is important that we only print the matrix and absolutely nothing else
         print(generate_ci_jobs(platform=arguments.platform, split_by_build_types=split_by_build_types, 
-                               force_build_all=arguments.force_build_all, base_matrix=arguments.base_matrix))
+                               force_build_all=arguments.force_build_all, base_matrix_path=arguments.base_matrix))
 
 
 def cli():

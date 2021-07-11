@@ -5,6 +5,7 @@ import copy
 import logging
 import re
 import typing
+import pathlib
 
 from bincrafters.build_shared import PLATFORMS, get_bool_from_env, get_conan_vars, get_recipe_path, get_version_from_ci
 from bincrafters.autodetect import *
@@ -50,7 +51,7 @@ def _get_base_config(recipe_directory: str,
                      split_by_build_types: bool, 
                      build_set: str = "full", 
                      recipe_type: str = "", 
-                     base_matrix: typing.TextIO = None):
+                     base_matrix: typing.Any = None):
     if recipe_type == "":
         if _do_discard_duplicated_build_ids():
             cwd = os.getcwd()
@@ -66,14 +67,12 @@ def _get_base_config(recipe_directory: str,
     matrix_minimal = {}
 
     if base_matrix:
-        try:
-            matrix["config"] = yaml.safe_load(base_matrix)
-        except:
-            matrix["config"] = json.load(base_matrix)
-        if recipe_type in matrix["config"]:
-            matrix["config"] = matrix["config"][recipe_type]
-        elif "default" in matrix["config"]:
-            matrix["config"] = matrix["config"]["default"]
+        if recipe_type in base_matrix:
+            matrix["config"] = base_matrix[recipe_type]
+        elif "default" in base_matrix:
+            matrix["config"] = base_matrix["default"]
+        else:
+            matrix["config"] = base_matrix
         matrix_minimal["config"] = matrix["config"].copy()
     elif platform == "gha":
         run_macos = _run_macos_jobs_on_gha()
@@ -226,7 +225,7 @@ def generate_ci_jobs(platform: str,
                      recipe_type: str = autodetect(), 
                      split_by_build_types: bool = False, 
                      force_build_all: bool = False,
-                     base_matrix: typing.TextIO = None) -> str:
+                     base_matrix_path: pathlib.Path = None) -> str:
     if platform not in PLATFORMS:
         return ""
 
@@ -241,6 +240,13 @@ def generate_ci_jobs(platform: str,
 
     directory_structure = autodetect_directory_structure()
     final_matrix = {"config": []}
+
+    try:
+        with open(base_matrix_path) as f:
+            base_matrix = yaml.safe_load(f)
+    except:
+        with open(base_matrix_path) as f:
+            base_matrix = json.load(f)
 
     def _detect_changed_directories(path_filter: str = None) -> set:
         changed_dirs = []
