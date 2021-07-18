@@ -348,7 +348,7 @@ def generate_ci_jobs(platform: str,
             name = config["name"]
             del config["name"]
             bpt_matrix = {}
-            for key in [ "compiler", "version", "cwd", "recipe_version", "dockerImage" ]:
+            for key in [ "compiler", "version", "cwd", "recipe_version", "dockerImage", "options" ]:
                 bpt_matrix[key] = config[key]
                 del config[key]
             config["variables"] = {}

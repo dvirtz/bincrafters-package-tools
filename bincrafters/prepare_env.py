@@ -41,10 +41,18 @@ def prepare_env(platform: str, config: json, select_config: str = None, set_env_
 
     set_env_variable = set_env_variable or _set_env_variable
 
+    def _options_str(options: typing.Dict[str, typing.Dict[str, str]]):
+        options_str = []
+        for package, package_options in options.items():
+            for option_name, option_val in package_options.items():
+                options_str.append("{}:{}={}".format(package, option_name, option_val))
+        return ",".join(options_str)
+
     compiler = config["compiler"]
     compiler_version = config["version"]
     docker_image = config.get("dockerImage", "")
     build_type = config.get("buildType", "")
+    options = config.get("options")
 
     set_env_variable("BPT_CWD", config["cwd"])
     set_env_variable("CONAN_VERSION", config["recipe_version"])
@@ -69,6 +77,9 @@ def prepare_env(platform: str, config: json, select_config: str = None, set_env_
 
     if build_type != "":
         set_env_variable("CONAN_BUILD_TYPES", build_type)
+
+    if options:
+        set_env_variable("CONAN_OPTIONS", _options_str(options))
 
     if platform == "gha" or platform == "azp":
         if compiler == "APPLE_CLANG":
