@@ -92,14 +92,20 @@ def run_autodetect():
     # In some cases Python may ignore the mode of makedirs, do it again explicitly with chmod
     os.chmod(tmpdir, mode=0o777)
 
-    os.system('conan config set storage.download_cache="{}"'.format(tmpdir))
-    os.system('conan config set general.revisions_enabled=1')
-    os.environ["CONAN_DOCKER_ENTRY_SCRIPT"] =\
-        "conan config set storage.download_cache='{}'; conan config set general.revisions_enabled=1".format(tmpdir)
-    os.environ['CONAN_DOCKER_RUN_OPTIONS'] = ' '.join(filter(None, [
-        os.environ.get('CONAN_DOCKER_RUN_OPTIONS'), 
-        "-v '{0}':'{0}'".format(tmpdir)
+    entry_script = "; ".join(filter(None, [
+        os.environ.get("CONAN_DOCKER_ENTRY_SCRIPT"),
+        "conan config set storage.download_cache='{}'".format(tmpdir),
+        "conan config set general.revisions_enabled=1"
     ]))
+
+    if os.environ.get("CONAN_DOCKER_IMAGE"):
+        os.environ["CONAN_DOCKER_ENTRY_SCRIPT"] = entry_script
+        os.environ['CONAN_DOCKER_RUN_OPTIONS'] = ' '.join(filter(None, [
+            os.environ.get('CONAN_DOCKER_RUN_OPTIONS'), 
+            "-v '{0}':'{0}'".format(tmpdir)
+        ]))
+    else:
+        os.system(entry_script)
 
     ###
     # Enabling installing system_requirements
