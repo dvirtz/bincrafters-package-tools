@@ -1,5 +1,6 @@
 import json
 import os
+from conans.client import conf
 import yaml
 import copy
 import logging
@@ -349,8 +350,9 @@ def generate_ci_jobs(platform: str,
             del config["name"]
             bpt_matrix = {}
             for key in [ "compiler", "version", "cwd", "recipe_version", "dockerImage", "options" ]:
-                bpt_matrix[key] = config[key]
-                del config[key]
+                if key in config:
+                    bpt_matrix[key] = config[key]
+                    del config[key]
             config["variables"] = {}
             def _set_env_variable(var_name: str, value: str):
                 config["variables"][var_name] = value
