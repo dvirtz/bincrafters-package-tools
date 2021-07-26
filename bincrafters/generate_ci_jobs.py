@@ -226,7 +226,8 @@ def generate_ci_jobs(platform: str,
                      recipe_type: str = autodetect(), 
                      split_by_build_types: bool = False, 
                      force_build_all: bool = False,
-                     base_matrix_path: pathlib.Path = None) -> str:
+                     base_matrix_path: pathlib.Path = None,
+                     base_commit: str = None) -> str:
     if platform not in PLATFORMS:
         return ""
 
@@ -257,7 +258,9 @@ def generate_ci_jobs(platform: str,
 
         changed_dirs.extend(utils_git_get_changed_dirs(base=current_commit))
 
-        if default_branch != current_branch:
+        if base_commit:
+            changed_dirs.extend(utils_git_get_changed_dirs(base=base_commit, head=current_commit))
+        elif default_branch != current_branch:
             # The default branch might not be tracked locally
             # i.e. "main" might be unknown, while "origin/main" should always be known
             # similar for the current_branch, so lets use the hash commit which should be always be known
