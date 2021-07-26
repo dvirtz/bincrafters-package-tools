@@ -358,6 +358,12 @@ def generate_ci_jobs(platform: str,
                 config["variables"][var_name] = value
             prepare_env(platform, bpt_matrix, set_env_variable=_set_env_variable)
             gl_matrix[name] = config
+        if len(gl_matrix) == 0:
+            # generate a job which will be shown as a warning
+            gl_matrix["no-configurations"] = {
+                "script": "echo \"no configurations found\" && exit 1",
+                "allow_failure": True
+            }
         matrix_string = yaml.dump(gl_matrix)
 
     return matrix_string
