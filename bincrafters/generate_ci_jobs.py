@@ -3,8 +3,6 @@ import os
 from conans.client import conf
 import yaml
 import copy
-import logging
-import re
 import typing
 import pathlib
 
@@ -286,7 +284,7 @@ def generate_ci_jobs(platform: str,
             # If we are on a branch like testing/3.0.0 then only build 3.0.0
             # regardless of config.yml settings
             # If we are on an unversioned branch, only build versions which dirs got changed
-            if (get_version_from_ci() == "" and version_attr["folder"] in changed_dirs) \
+            if (get_version_from_ci() == "" and any(map(lambda dir: pathlib.Path(dir).parts[0] == version_attr["folder"], changed_dirs))) \
                     or get_version_from_ci() == version \
                     or force_build_all:
                 if version_build_value != "none":
