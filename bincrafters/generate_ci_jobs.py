@@ -354,7 +354,7 @@ def generate_ci_jobs(platform: str,
                 if key in config:
                     bpt_matrix[key] = config[key]
                     del config[key]
-            config["variables"] = {}
+            config.setdefault("variables", {})
             def _set_env_variable(var_name: str, value: str):
                 config["variables"][var_name] = value
             prepare_env(platform, bpt_matrix, set_env_variable=_set_env_variable)
