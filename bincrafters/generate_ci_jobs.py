@@ -67,12 +67,13 @@ def _get_base_config(recipe_directory: str,
 
     if base_matrix:
         if recipe_type in base_matrix:
-            matrix["config"] = base_matrix[recipe_type]
+            config = base_matrix[recipe_type]
         elif "default" in base_matrix:
-            matrix["config"] = base_matrix["default"]
+            config = base_matrix["default"]
         else:
-            matrix["config"] = base_matrix
-        matrix_minimal["config"] = matrix["config"].copy()
+            config = base_matrix
+        matrix["config"] = copy.deepcopy(config)
+        matrix_minimal["config"] = matrix["config"]
     elif platform == "gha":
         run_macos = _run_macos_jobs_on_gha()
         run_windows = _run_windows_jobs_on_gha()
