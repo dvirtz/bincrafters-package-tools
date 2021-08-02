@@ -273,6 +273,9 @@ def generate_ci_jobs(platform: str,
         # Remove trailing /
         changed_dirs = [os.path.dirname(x) for x in changed_dirs]
 
+        # also add parents
+        changed_dirs = [str(dir) for d in changed_dirs for dir in (d, *pathlib.Path(d).parents) if dir != pathlib.Path()]
+
         return set(changed_dirs)
 
     def _parse_recipe_directory(path: str, path_filter: str = None, recipe_displayname: str = None, force_build_all: bool = False):
@@ -284,7 +287,7 @@ def generate_ci_jobs(platform: str,
             # If we are on a branch like testing/3.0.0 then only build 3.0.0
             # regardless of config.yml settings
             # If we are on an unversioned branch, only build versions which dirs got changed
-            if (get_version_from_ci() == "" and any(map(lambda dir: pathlib.Path(dir).parts[0] == version_attr["folder"], changed_dirs))) \
+            if (get_version_from_ci() == "" and version_attr["folder"] in changed_dirs) \
                     or get_version_from_ci() == version \
                     or force_build_all:
                 if version_build_value != "none":
