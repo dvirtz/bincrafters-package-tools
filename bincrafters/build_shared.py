@@ -72,7 +72,8 @@ def is_shared(recipe=None):
     if options:
         return "shared" in options
 
-    match = get_value_from_recipe(r'''options.*=([\s\S]*?)(?=}|$)''', recipe=recipe)
+    # don't mistake with dependencies options
+    match = get_value_from_recipe(r'''options\s*=([\s\S]*?)(?=}|$)''', recipe=recipe)
     if match is None:
         return False
     return "shared" in match.groups()[0]
