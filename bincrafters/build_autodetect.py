@@ -131,7 +131,7 @@ def run_autodetect():
         if "BPT_CWD" in os.environ:
             del os.environ["BPT_CWD"]
 
-        subprocess.run("python build.py", cwd=new_wd, shell=True, check=True)
+        subprocess.check_call([sys.executable, "build.py"], cwd=new_wd)
         return
 
     ###
