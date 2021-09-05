@@ -5,6 +5,7 @@ import yaml
 import copy
 import typing
 import pathlib
+import re
 
 from bincrafters.build_shared import PLATFORMS, get_bool_from_env, get_conan_vars, get_recipe_path, get_version_from_ci
 from bincrafters.autodetect import *
@@ -224,7 +225,7 @@ def _get_base_config(recipe_directory: str,
 def generate_ci_jobs(platform: str, 
                      recipe_type: str = autodetect(), 
                      split_by_build_types: bool = False, 
-                     force_build_all: bool = False,
+                     recipe_pattern: re.Pattern = None,
                      base_matrix_path: pathlib.Path = None,
                      base_commit: str = None) -> str:
     if platform not in PLATFORMS:
@@ -279,7 +280,7 @@ def generate_ci_jobs(platform: str,
 
         return set(changed_dirs)
 
-    def _parse_recipe_directory(path: str, path_filter: str = None, recipe_displayname: str = None, force_build_all: bool = False):
+    def _parse_recipe_directory(path: str, path_filter: str = None, recipe_displayname: str = None):
         changed_dirs = _detect_changed_directories(path_filter=path_filter)
         config_file = os.path.join(path, "config.yml")
         config_yml = yaml.load(open(config_file, "r"))
@@ -288,9 +289,10 @@ def generate_ci_jobs(platform: str,
             # If we are on a branch like testing/3.0.0 then only build 3.0.0
             # regardless of config.yml settings
             # If we are on an unversioned branch, only build versions which dirs got changed
-            if (get_version_from_ci() == "" and version_attr["folder"] in changed_dirs) \
-                    or get_version_from_ci() == version \
-                    or force_build_all:
+            # If there's a pattern add all and filter later
+            if recipe_pattern \
+                    or (get_version_from_ci() == "" and version_attr["folder"] in changed_dirs) \
+                    or get_version_from_ci() == version:
                 if version_build_value != "none":
                     if version_build_value == "full" or version_build_value == "minimal":
                         working_matrix = _get_base_config(
@@ -311,6 +313,8 @@ def generate_ci_jobs(platform: str,
                         else:
                             new_config["cwd"] = "{}{}".format(path_filter, version_attr["folder"])
                             new_config["name"] = "{}/{} {}".format(recipe_displayname, version, new_config["name"])
+                        if recipe_pattern and not recipe_pattern.match(new_config["name"]):
+                            continue
                         new_config["recipe_version"] = version
                         final_matrix["config"].append(new_config)
 
@@ -325,7 +329,7 @@ def generate_ci_jobs(platform: str,
             final_matrix["config"].append(new_config)
 
     elif directory_structure == DIR_STRUCTURE_ONE_RECIPE_MANY_VERSIONS:
-        _parse_recipe_directory(path=os.getcwd(), force_build_all=force_build_all)
+        _parse_recipe_directory(path=os.getcwd())
 
     elif directory_structure == DIR_STRUCTURE_CCI:
         recipes = [f.path for f in os.scandir("recipes") if f.is_dir()]
@@ -334,8 +338,7 @@ def generate_ci_jobs(platform: str,
             recipe_displayname = recipe_folder.replace("recipes/", "")
             _parse_recipe_directory(path=recipe_folder,
                                     path_filter="{}/".format(recipe_folder),
-                                    recipe_displayname=recipe_displayname,
-                                    force_build_all=force_build_all)
+                                    recipe_displayname=recipe_displayname)
 
     # Now where we have the complete matrix, we have to parse it in a final string
     # which can be understood by the target platform

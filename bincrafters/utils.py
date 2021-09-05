@@ -1,6 +1,7 @@
 import subprocess
 import os
 import logging
+from functools import lru_cache
 
 
 def _utils_execute_script(script: str, remove_newlines: bool = True) -> str:
@@ -15,6 +16,7 @@ def _utils_execute_script(script: str, remove_newlines: bool = True) -> str:
     return result
 
 
+@lru_cache(maxsize=1)
 def utils_git_get_default_branch(remote: str = "origin") -> str:
     return _utils_execute_script("git remote show {} | grep 'HEAD branch' | sed 's/.*: //'".format(remote))
 
@@ -40,6 +42,7 @@ def utils_git_get_current_commit() -> str:
     return _utils_execute_script("git rev-parse HEAD")
 
 
+@lru_cache(maxsize=2)
 def utils_git_get_changed_dirs(base: str, head: str = None) -> list:
     if not head:
         # Per default lets get the diff between the provided base and the commit before that

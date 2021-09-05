@@ -38,6 +38,8 @@ def get_value_from_recipe(search_string, recipe=None):
 
 
 def inspect_value_from_recipe(attribute, recipe_path):
+    if recipe_path is None:
+        recipe_path = get_recipe_path()
     cwd = os.getcwd()
     result = None
 
