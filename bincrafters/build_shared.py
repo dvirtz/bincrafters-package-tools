@@ -266,6 +266,17 @@ def get_reference(name, version, kwargs):
     return kwargs
 
 
+def get_platform_info(kwargs):
+    if "platform_info" not in kwargs:        
+        os_name = os.getenv("CONAN_OS_NAME")
+        if os_name:
+            class PlatformInfo(object):
+                def system(self):
+                    return os_name
+            kwargs["platform_info"] = PlatformInfo()
+    return kwargs
+
+
 def get_builder(build_policy=None, cwd=None, **kwargs):
     recipe = get_recipe_path(cwd)
     cwd = os.path.dirname(recipe)
@@ -278,6 +289,7 @@ def get_builder(build_policy=None, cwd=None, **kwargs):
     kwargs = get_upload_when_stable(kwargs)
     kwargs = get_stable_branch_pattern(kwargs)
     kwargs = get_archs(kwargs)
+    kwargs = get_platform_info(kwargs)
     build_policy = os.getenv("CONAN_BUILD_POLICY", build_policy)
 
     builder = ConanMultiPackager(
