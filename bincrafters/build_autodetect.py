@@ -69,8 +69,9 @@ def _get_builder():
 
     if recipe_is_installer:
         arch = os.getenv("ARCH", "x86_64")
+        the_os = "Linux" if os.environ.get("CONAN_DOCKER_IMAGE") else get_os()
         builder = build_shared.get_builder(**kwargs)
-        builder.add({"os": get_os(), "arch_build": arch, "arch": arch}, {}, {}, {})
+        builder.add({"os": the_os, "arch_build": arch, "arch": arch}, {}, {}, {})
     elif recipe_is_unconditional_header_only:
         builder = build_shared.get_builder(**kwargs)
         builder.add()
