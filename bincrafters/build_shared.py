@@ -61,12 +61,12 @@ def inspect_value_from_recipe(attribute, recipe_path):
 
 def get_name_from_recipe(recipe=None):
     name = inspect_value_from_recipe(attribute="name", recipe_path=recipe)
-    return name or get_value_from_recipe(r'''name\s*=\s*["'](\S*)["']''', recipe=recipe).groups()[0]
+    return name or get_value_from_recipe(r'''\bname\s*=\s*["'](\S*)["']''', recipe=recipe).groups()[0]
 
 
 def get_version_from_recipe(recipe=None):
     version = inspect_value_from_recipe(attribute="version", recipe_path=recipe)
-    return version or get_value_from_recipe(r'''version\s*=\s*["'](\S*)["']''', recipe=recipe).groups()[0]
+    return version or get_value_from_recipe(r'''\bversion\s*=\s*["'](\S*)["']''', recipe=recipe).groups()[0]
 
 
 def is_shared(recipe=None):
@@ -75,7 +75,7 @@ def is_shared(recipe=None):
         return "shared" in options
 
     # don't mistake with dependencies options
-    match = get_value_from_recipe(r'''options\s*=([\s\S]*?)(?=}|$)''', recipe=recipe)
+    match = get_value_from_recipe(r'''\boptions\s*=([\s\S]*?)(?=}|$)''', recipe=recipe)
     if match is None:
         return False
     return "shared" in match.groups()[0]
