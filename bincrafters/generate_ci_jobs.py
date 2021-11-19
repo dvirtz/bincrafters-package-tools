@@ -153,43 +153,7 @@ def _get_base_config(recipe_directory: str,
                 {"name": "Windows VS 2019", "compiler": "VISUAL", "version": "16", "os": "windows-2019"},
             ]
     elif platform == "gl":
-        if recipe_type == "installer":
-            matrix["config"] = [
-                {"name": "Installer Linux",  "compiler": "GCC", "version": "7", "image": "conanio/gcc7", "extends": [ ".child-config", ".child-config-linux" ]},
-                {"name": "Installer Windows", "compiler": "VISUAL", "version": "16", "extends": [ ".child-config", ".child-config-windows" ]}
-            ]
-            matrix_minimal["config"] = matrix["config"].copy()
-        elif recipe_type == "unconditional_header_only":
-            matrix["config"] = [
-                {"name": "Header-only Linux", "compiler": "CLANG", "version": "8", "extends": [ ".child-config", ".child-config-linux" ]},
-                {"name": "Header-only Windows", "compiler": "VISUAL", "version": "16", "extends": [ ".child-config", ".child-config-windows" ]}
-            ]
-            matrix_minimal["config"] = matrix["config"].copy()
-        else:
-            matrix["config"] = [
-                {"name": "GCC 4.9", "compiler": "GCC", "version": "4.9", "extends": [ ".child-config", ".child-config-linux" ]},
-                {"name": "GCC 5", "compiler": "GCC", "version": "5", "extends": [ ".child-config", ".child-config-linux" ]},
-                {"name": "GCC 6", "compiler": "GCC", "version": "6", "extends": [ ".child-config", ".child-config-linux" ]},
-                {"name": "GCC 7", "compiler": "GCC", "version": "7", "extends": [ ".child-config", ".child-config-linux" ]},
-                {"name": "GCC 8", "compiler": "GCC", "version": "8", "extends": [ ".child-config", ".child-config-linux" ]},
-                {"name": "GCC 9", "compiler": "GCC", "version": "9", "extends": [ ".child-config", ".child-config-linux" ]},
-                {"name": "GCC 10", "compiler": "GCC", "version": "10", "extends": [ ".child-config", ".child-config-linux" ]},
-                {"name": "CLANG 3.9", "compiler": "CLANG", "version": "3.9", "extends": [ ".child-config", ".child-config-linux" ]},
-                {"name": "CLANG 4.0", "compiler": "CLANG", "version": "4.0", "extends": [ ".child-config", ".child-config-linux" ]},
-                {"name": "CLANG 5.0", "compiler": "CLANG", "version": "5.0", "extends": [ ".child-config", ".child-config-linux" ]},
-                {"name": "CLANG 6.0", "compiler": "CLANG", "version": "6.0", "extends": [ ".child-config", ".child-config-linux" ]},
-                {"name": "CLANG 7.0", "compiler": "CLANG", "version": "7.0", "extends": [ ".child-config", ".child-config-linux" ]},
-                {"name": "CLANG 8", "compiler": "CLANG", "version": "8", "extends": [ ".child-config", ".child-config-linux" ]},
-                {"name": "CLANG 9", "compiler": "CLANG", "version": "9", "extends": [ ".child-config", ".child-config-linux" ]},
-                {"name": "CLANG 10", "compiler": "CLANG", "version": "10", "extends": [ ".child-config", ".child-config-linux" ]},
-                {"name": "CLANG 11", "compiler": "CLANG", "version": "11", "extends": [ ".child-config", ".child-config-linux" ]},
-                {"name": "Windows VS 2019", "compiler": "VISUAL", "version": "16", "extends": [ ".child-config", ".child-config-windows" ]},
-            ]
-            matrix_minimal["config"] = [
-                {"name": "GCC 7", "compiler": "GCC", "version": "7", "extends": [ ".child-config", ".child-config-linux" ]},
-                {"name": "CLANG 8", "compiler": "CLANG", "version": "8", "extends": [ ".child-config", ".child-config-linux" ]},
-                {"name": "Windows VS 2019", "compiler": "VISUAL", "version": "16", "extends": [ ".child-config", ".child-config-windows" ]},
-            ]
+        raise Exception("GitLab build requires a base matrix to be defined") 
 
     # Split build jobs by build_type (Debug, Release)
     # Duplicate each builds job, then add the buildType value
@@ -243,12 +207,15 @@ def generate_ci_jobs(platform: str,
     directory_structure = autodetect_directory_structure()
     final_matrix = {"config": []}
 
-    try:
-        with open(base_matrix_path) as f:
-            base_matrix = yaml.safe_load(f)
-    except:
-        with open(base_matrix_path) as f:
-            base_matrix = json.load(f)
+    if base_matrix_path:
+        try:
+            with open(base_matrix_path) as f:
+                base_matrix = yaml.safe_load(f)
+        except:
+            with open(base_matrix_path) as f:
+                base_matrix = json.load(f)
+    else:
+        base_matrix = None
 
     def _detect_changed_directories(path_filter: str = None) -> set:
         changed_dirs = []
@@ -372,6 +339,9 @@ def generate_ci_jobs(platform: str,
                 "script": "echo \"no configurations found\" && exit 1",
                 "allow_failure": True
             }
+        # copy includes
+        if "include" in base_matrix:
+            gl_matrix["include"] = base_matrix["include"]
         matrix_string = yaml.dump(gl_matrix)
 
     return matrix_string
