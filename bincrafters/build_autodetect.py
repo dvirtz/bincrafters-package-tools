@@ -94,9 +94,9 @@ def run_autodetect():
     os.chmod(tmpdir, mode=0o777)
 
     entry_script = filter(None, [
-        os.environ.get("CONAN_DOCKER_ENTRY_SCRIPT"),
-        "conan config set storage.download_cache='{}'".format(tmpdir),
-        "conan config set general.revisions_enabled=1"
+        os.environ.get('CONAN_DOCKER_ENTRY_SCRIPT'),
+        'conan config set storage.download_cache="{}"'.format(tmpdir),
+        'conan config set general.revisions_enabled=1'
     ])
 
     if os.environ.get("CONAN_DOCKER_IMAGE"):
