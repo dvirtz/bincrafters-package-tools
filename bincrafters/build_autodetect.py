@@ -67,12 +67,7 @@ def _get_builder():
             or autodetect_directory_structure() == DIR_STRUCTURE_CCI:
         kwargs["stable_branch_pattern"] = os.getenv("CONAN_STABLE_BRANCH_PATTERN", "main")
 
-    if recipe_is_installer:
-        arch = os.getenv("ARCH", "x86_64")
-        the_os = "Linux" if os.environ.get("CONAN_DOCKER_IMAGE") else get_os()
-        builder = build_shared.get_builder(**kwargs)
-        builder.add({"os": the_os, "arch_build": arch, "arch": arch}, {}, {}, {})
-    elif recipe_is_unconditional_header_only:
+    if recipe_is_installer or recipe_is_unconditional_header_only:
         builder = build_shared.get_builder(**kwargs)
         builder.add()
     else:
