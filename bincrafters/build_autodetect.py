@@ -1,11 +1,13 @@
-import sys
-import subprocess
-import tempfile
 import os
+import subprocess
+import sys
+import tempfile
 
-from bincrafters.build_shared import printer, get_os
+from cpt.tools import split_colon_env, transform_list_options_to_dict
+
 from bincrafters import build_shared
 from bincrafters.autodetect import *
+from bincrafters.build_shared import printer
 
 
 def _flush_output():
@@ -69,7 +71,8 @@ def _get_builder():
 
     if recipe_is_installer or recipe_is_unconditional_header_only:
         builder = build_shared.get_builder(**kwargs)
-        builder.add()
+        options = transform_list_options_to_dict(split_colon_env('CONAN_OPTIONS') or [])
+        builder.add(options=options)
     else:
         builder = _get_default_builder(pure_c=recipe_is_pure_c, **kwargs)
 
